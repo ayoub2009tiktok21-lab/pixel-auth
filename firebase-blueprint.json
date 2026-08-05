@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "sessions": {
+      "title": "Sessions",
+      "description": "Pixel 10 Pro simulation sessions and log history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "sessionName": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "proxyUsed": { "type": "string" },
+        "logs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["sessionName", "status", "createdAt"]
+    },
+    "bot_configs": {
+      "title": "Bot Configurations",
+      "description": "User stored Telegram bot settings and credentials",
+      "type": "object",
+      "properties": {
+        "botToken": { "type": "string" },
+        "witAiToken": { "type": "string" },
+        "proxies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["updatedAt"]
+    }
+  }
+}

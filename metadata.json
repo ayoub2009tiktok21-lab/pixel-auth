@@ -1,0 +1,6 @@
+{
+  "name": "AutoPixel XT - Pixel 10 Pro Assistant",
+  "description": "AutoPixel XT Telegram bot and web control dashboard simulating Pixel 10 Pro sessions for Google One and Gemini AI offer diagnostics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
