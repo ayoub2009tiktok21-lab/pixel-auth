@@ -185,7 +185,31 @@ select{background:#161c22;color:var(--txt);border:1px solid rgba(255,255,255,.14
     </div>
   </div>
 </div>
-<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
-<script type="module" src="./src/main.js"></script>
+<script>
+// Boot watchdog (classic script: always runs, even if the bundle fails).
+// Shows a visible message on device so boot problems are diagnosable.
+window.__ironlineBooted = false;
+window.addEventListener('error', function (e) {
+  if (window.__ironlineBooted) return;
+  var d = document.getElementById('booterr');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'booterr';
+    d.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:rgba(60,10,10,.92);color:#ffd9d0;border:1px solid #e06c5c;border-radius:8px;padding:10px 12px;font:13px/1.5 monospace;word-break:break-word;';
+    document.body.appendChild(d);
+  }
+  d.textContent = 'BOOT ERROR: ' + (e.message || 'script failed to load/execute');
+});
+window.addEventListener('unhandledrejection', function (e) {
+  if (window.__ironlineBooted) return;
+  window.dispatchEvent(new Error('unhandled rejection: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason))));
+});
+setTimeout(function () {
+  if (!window.__ironlineBooted) {
+    window.dispatchEvent(new Error('game bundle did not boot within 6s'));
+  }
+}, 6000);
+</script>
+<script src="ironline.js"></script>
 </body>
 </html>

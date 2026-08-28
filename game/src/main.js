@@ -380,6 +380,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined' && document
   const canvas = document.getElementById('game');
   const game = createGame({ canvas });
   window.game = game; // debug/test access
+  window.__ironlineBooted = true;
 
   let last = performance.now();
   let lastFrame = 0;

@@ -57,13 +57,13 @@ log('generating launcher icon');
 sh(`python3 "${join(here, 'make-icon.py')}" "${join(OUT, 'res/mipmap-xxxhdpi/ic_launcher.png')}"`);
 cpSync(join(here, 'res/values/strings.xml'), join(OUT, 'res/values/strings.xml'));
 
+log('bundling game (classic script for file:// WebView)');
+sh(`node "${join(GAME, 'build-web.mjs')}"`);
 log('staging game assets');
-for (const f of ['index.html', 'manifest.webmanifest']) {
+for (const f of ['index.html', 'manifest.webmanifest', 'ironline.js']) {
   cpSync(join(GAME, f), join(OUT, 'assets/game', f));
 }
 sh(`python3 "${join(here, 'make-icon.py')}" "${join(OUT, 'assets/game/icon.png')}"`);
-cpSync(join(GAME, 'src'), join(OUT, 'assets/game/src'), { recursive: true });
-cpSync(join(GAME, 'vendor'), join(OUT, 'assets/game/vendor'), { recursive: true });
 
 // ---------- 3. aapt (v1) package: manifest + res + assets ----------
 // aapt v1 resolves android:* attributes against the real android.jar,
