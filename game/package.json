@@ -1,0 +1,14 @@
+{
+  "name": "ironline-fps",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "IRONLINE — original 4v4 tactical mobile FPS (Three.js WebGL, Capacitor-ready)",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test": "node test/node/run.js"
+  },
+  "dependencies": {
+    "three": "^0.152.2"
+  }
+}

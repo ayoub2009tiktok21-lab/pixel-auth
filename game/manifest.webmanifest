@@ -1,0 +1,13 @@
+{
+  "name": "IRONLINE — Tactical FPS",
+  "short_name": "IRONLINE",
+  "description": "Original 4v4 tactical first-person shooter for mobile",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0d10",
+  "theme_color": "#0a0d10",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

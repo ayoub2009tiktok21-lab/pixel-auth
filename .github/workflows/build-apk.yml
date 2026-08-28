@@ -1,0 +1,35 @@
+name: Build APK (GitHub runners have full Android SDK)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android build-tools + platform
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "build-tools;30.0.3" "platforms;android-30" "platform-tools"
+
+      - name: Build APK (in-repo toolchain script)
+        env:
+          IRONLINE_BT: ${{ env.ANDROID_HOME }}/build-tools/30.0.3
+          IRONLINE_PLAT: ${{ env.ANDROID_HOME }}/platforms/android-30
+        run: node game/tools/apk/build.mjs
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: IRONLINE-APK
+          path: APK/*.apk

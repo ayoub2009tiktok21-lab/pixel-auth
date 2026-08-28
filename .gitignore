@@ -21,3 +21,7 @@ tmp_*.py
 
 # Local proxy list
 proxies.txt
+APK/
+tools/apk/build/
+tools/apk/*.keystore
+node_modules/
