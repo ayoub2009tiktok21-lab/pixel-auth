@@ -2,7 +2,9 @@
 // Browser visual test: boots the real game in headless Chromium
 // (SwiftShader WebGL), drives it with keyboard, captures
 // screenshots + console/page errors + WebGL health.
-// Run: node test/browser/shot.js  (dev server must be on :8080)
+// NOTE: software rendering is slow, so the sim can lag real
+// time — all waits POLL game state instead of fixed sleeps.
+// Run: node test/browser/shot.js  (dev server on :8080)
 // ============================================================
 import puppeteer from 'puppeteer-core';
 import { mkdirSync } from 'node:fs';
@@ -12,7 +14,6 @@ const GAME_URL = process.env.GAME_URL || 'http://127.0.0.1:8080';
 const SHOTS = fileURLToPath(new NodeURL('../../shots/', import.meta.url));
 mkdirSync(SHOTS, { recursive: true });
 
-// @sparticuz/chromium bundles a headless Chrome build
 let chromium;
 try { chromium = (await import('@sparticuz/chromium')).default; }
 catch (e) { console.error('sparticuz chromium not available:', e.message); process.exit(2); }
@@ -39,109 +40,108 @@ const shot = async (name) => {
   console.log('shot:', name);
 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const waitFor = (fn, what, timeout = 60000) =>
+  page.waitForFunction(fn, { timeout, polling: 200 }).then(() => console.log('ok:', what));
 
-await page.goto(GAME_URL, { waitUntil: 'networkidle0', timeout: 60000 });
-await wait(2500);
+await page.goto(GAME_URL, { waitUntil: 'networkidle0', timeout: 90000 });
+await wait(2000);
 
 // 1. menu
 const menuVisible = await page.$eval('#scr-menu', (el) => el.classList.contains('on'));
 console.log('menu visible:', menuVisible);
 await shot('01-menu.png');
 
-// 2. start match (click Deploy)
+// 2. start match
 await page.click('#m-play');
-await wait(1500);
+await waitFor(() => window.game?.match && ['lobby', 'active'].includes(window.game.match.state), 'match started');
+await wait(800);
 await shot('02-lobby.png');
-await wait(3500); // lobby 2.6s + round start
+await waitFor(() => window.game?.match?.state === 'active', 'round 1 active');
 const state1 = await page.evaluate(() => ({
   state: window.game?.match?.state,
-  active: !!window.game?.matchActive,
-  fps: Math.round(window.game?.perf?.avg || 0),
   webgl: (() => { try { const c = document.createElement('canvas'); return !!c.getContext('webgl2') || !!c.getContext('webgl'); } catch (e) { return false; } })(),
   entities: window.game?.match?.entities?.().length,
 }));
 console.log('after start:', JSON.stringify(state1));
 await shot('03-round-active.png');
 
-// 3. move forward + fire
+// 3. move + fire (poll ammo)
 await page.keyboard.down('w');
-await wait(600);
+await wait(700);
 await page.keyboard.down('f');
-await wait(1800);
+await waitFor(() => (window.game?.weapons?.ammoState?.mag ?? 30) < 25, 'AK fired (>4 shots)');
 await page.keyboard.up('f');
 await page.keyboard.up('w');
-const ammoAfter = await page.evaluate(() => window.game?.weapons?.ammoState?.mag);
-console.log('ammo after firing (expect < 30):', ammoAfter);
+console.log('ammo after firing:', await page.evaluate(() => window.game?.weapons?.ammoState?.mag));
 await shot('04-firing.png');
 
 // 4. ADS
 await page.keyboard.down('e');
-await wait(1200);
-const fovAds = await page.evaluate(() => window.game?.camera?.fov);
-await page.keyboard.up('e');
-console.log('fov during ADS (expect ~50):', fovAds);
+await waitFor(() => (window.game?.camera?.fov ?? 72) < 55, 'ADS fov engaged');
+console.log('fov during ADS:', await page.evaluate(() => window.game?.camera?.fov?.toFixed?.(1)));
 await shot('05-ads.png');
+await page.keyboard.up('e');
+await waitFor(() => (window.game?.camera?.fov ?? 50) > 66, 'fov returned to hip');
 
 // 5. jump + slide
 await page.keyboard.down('w');
-await wait(500);
+await wait(600);
 await page.keyboard.down(' ');
-await wait(900);
-await page.keyboard.up('w');
+await waitFor(() => window.game?.player?.airborne === true, 'airborne');
+await waitFor(() => window.game?.player?.grounded === true, 'landed');
 await page.keyboard.down('c'); // crouch/slide while moving
-await wait(300);
+await wait(250);
 await shot('06-slide.png');
 await page.keyboard.up('c');
-await wait(1200);
+await wait(1000);
 
-// 6. swap weapon + reload
+// 6. swap weapon
 await page.keyboard.down('q'); await page.keyboard.up('q');
-await wait(800);
-const w2 = await page.evaluate(() => window.game?.weapons?.current);
-console.log('weapon after swap:', w2);
+await waitFor(() => window.game?.weapons?.current === 'pistol', 'swapped to pistol');
 await shot('07-pistol.png');
 
-// 7. pause menu
+// 7. pause
 await page.keyboard.down('p'); await page.keyboard.up('p');
-await wait(400);
-const paused = await page.evaluate(() => window.game?.paused);
-console.log('paused:', paused);
+await waitFor(() => window.game?.paused === true, 'paused');
 await shot('08-pause.png');
 await page.keyboard.down('p'); await page.keyboard.up('p');
-await wait(400);
+await waitFor(() => window.game?.paused === false, 'resumed');
 
-// 8. back to menu via quit
+// 8. quit to menu
 await page.keyboard.down('p'); await page.keyboard.up('p');
-await wait(300);
+await waitFor(() => window.game?.paused === true, 'paused 2');
 await page.click('#p-quit');
-await wait(600);
+await waitFor(() => document.getElementById('scr-menu')?.classList.contains('on'), 'back to menu');
 await shot('09-menu-again.png');
 
-// 9. settings screens
+// 9. settings tabs (re-query each time — tabs are re-rendered)
 await page.click('#m-settings');
-await wait(400);
+await waitFor(() => document.getElementById('scr-settings')?.classList.contains('on'), 'settings open');
 await shot('10-settings-controls.png');
-const tabs = await page.$$('#set-tabs .tab');
-for (const t of tabs) {
-  const label = await t.evaluate((el) => el.textContent);
-  await t.click();
-  await wait(250);
+const tabCount = await page.$$eval('#set-tabs .tab', (ts) => ts.length);
+for (let i = 2; i <= tabCount; i++) {
+  await page.click(`#set-tabs .tab:nth-child(${i})`);
+  await wait(300);
+  const label = await page.$eval(`#set-tabs .tab:nth-child(${i})`, (el) => el.textContent);
   await shot(`11-settings-${label.toLowerCase().replace(/\s+/g, '-')}.png`);
 }
-// back to menu
 await page.click('#set-back');
-await wait(300);
+await waitFor(() => document.getElementById('scr-menu')?.classList.contains('on'), 'menu after settings');
 
 // 10. HUD editor
 await page.click('#m-hudedit');
-await wait(500);
+await wait(600);
 await shot('12-hud-editor.png');
+await page.click('.tbtn[data-btn="fire"]'); // select a control → toolbar shows
+await wait(300);
+await shot('12b-hud-editor-selected.png');
 await page.click('#he-done');
 await wait(300);
 
-// 11. let the match run a while for AI combat visuals, then final shot
+// 11. new match + combat screenshot
 await page.click('#m-play');
-await wait(5000);
+await waitFor(() => window.game?.match?.state === 'active', 'new match active');
+await wait(8000);
 await shot('13-combat.png');
 
 console.log('\n--- errors ---');

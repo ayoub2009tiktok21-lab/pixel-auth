@@ -46,7 +46,7 @@ export function createGame(opts = {}) {
     });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
+    renderer.toneMappingExposure = 1.14;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   } else {
@@ -231,6 +231,7 @@ export function createGame(opts = {}) {
     on('lobby', (d) => {
       if (game.ui) {
         game.ui.banner('', `${TEAM_NAMES.a}  VS  ${TEAM_NAMES.b}`, `Round ${d.round}`);
+        game.ui._setButtonsVisible(true);
       }
     });
     on('roundStart', () => {

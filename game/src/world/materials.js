@@ -70,12 +70,12 @@ export function makeMaterials() {
       stone: C(0x8b8781), rock: C(0x7d7872), metal: C(0x4a4e52),
       metalDark: C(0x2e3134), leaf: C(0x4a6a38), trunk: C(0x5a4630),
       barrel: C(0x5f6a52), dirt: C(0x8a7a5c),
-      wMetal: M({ color: 0x2b2e31, metalness: 0.9, roughness: 0.45 }),
-      wMetalDark: M({ color: 0x1c1e20, metalness: 0.88, roughness: 0.5 }),
-      wWood: M({ color: 0xc08850, roughness: 0.6 }),
-      wPolymer: M({ color: 0x24272a, roughness: 0.6 }),
-      wSlide: M({ color: 0x3a3e42, metalness: 0.95, roughness: 0.3 }),
-      glove: C(0x39412f), gloveTrim: C(0x23281d), skin: C(0xc99b76), sleeve: C(0x4a4a3a),
+      wMetal: M({ color: 0x767d84, metalness: 0.7, roughness: 0.42 }),
+      wMetalDark: M({ color: 0x43484e, metalness: 0.85, roughness: 0.45 }),
+      wWood: M({ color: 0xd9a86e, roughness: 0.55 }),
+      wPolymer: M({ color: 0x3a3e44, roughness: 0.6 }),
+      wSlide: M({ color: 0x5a6068, metalness: 0.85, roughness: 0.28 }),
+      glove: C(0x5c6448), gloveTrim: C(0x3a4030), skin: C(0xd8a880), sleeve: C(0x666650),
       flash: new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
       tracer: new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }),
     };
@@ -85,7 +85,7 @@ export function makeMaterials() {
 
   const stuccoC = noiseCanvas(256, '#b3a68c', 42, rng);
   const stucco = canvasTex(stuccoC, { repeat: [2, 2] });
-  const woodC = noiseCanvas(256, '#6e4a2a', 36, rng);
+  const woodC = noiseCanvas(256, '#9a6a38', 36, rng);
   // wood grain streaks
   {
     const g = woodC.getContext('2d');
@@ -112,7 +112,7 @@ export function makeMaterials() {
   const stoneTex = canvasTex(stoneC, { repeat: [2, 2] });
   const rockC = noiseCanvas(256, '#7d7872', 56, rng);
   const rockTex = canvasTex(rockC);
-  const metalC = noiseCanvas(256, '#4a4e52', 20, rng);
+  const metalC = noiseCanvas(256, '#8a9098', 20, rng);
   const metalTex = canvasTex(metalC);
   const leafC = noiseCanvas(256, '#4a6a38', 44, rng);
   const leafTex = canvasTex(leafC);
@@ -140,15 +140,15 @@ export function makeMaterials() {
     barrel: M({ map: barrelTex, roughness: 0.8, metalness: 0.2 }),
     dirt: M({ map: dirtTex, roughness: 1 }),
     // weapon
-    wMetal: M({ color: 0x2b2e31, metalness: 0.92, roughness: 0.44, map: metalTex }),
-    wMetalDark: M({ color: 0x1c1e20, metalness: 0.88, roughness: 0.5 }),
-    wWood: M({ map: wood, roughness: 0.62, color: 0xc08850 }),
-    wPolymer: M({ color: 0x24272a, metalness: 0.15, roughness: 0.6 }),
-    wSlide: M({ color: 0x3a3e42, metalness: 0.95, roughness: 0.3 }),
-    glove: M({ color: 0x39412f, roughness: 0.95 }),
-    gloveTrim: M({ color: 0x23281d, roughness: 0.9 }),
-    skin: M({ color: 0xc99b76, roughness: 0.7 }),
-    sleeve: M({ color: 0x4a4a3a, roughness: 0.92 }),
+    wMetal: M({ color: 0x9aa0a8, metalness: 0.7, roughness: 0.4, map: metalTex }),
+    wMetalDark: M({ color: 0x4a5058, metalness: 0.85, roughness: 0.45 }),
+    wWood: M({ map: wood, roughness: 0.55, color: 0xffe3c2 }),
+    wPolymer: M({ color: 0x3a3e44, metalness: 0.15, roughness: 0.6 }),
+    wSlide: M({ color: 0x6a727c, metalness: 0.85, roughness: 0.28 }),
+    glove: M({ color: 0x5c6448, roughness: 0.95 }),
+    gloveTrim: M({ color: 0x3a4030, roughness: 0.9 }),
+    skin: M({ color: 0xd8a880, roughness: 0.7 }),
+    sleeve: M({ color: 0x666650, roughness: 0.92 }),
     // fx
     flash: new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
     tracer: new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }),

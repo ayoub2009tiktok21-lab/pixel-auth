@@ -33,9 +33,26 @@ export class UI {
     };
     this.matchEndEl = null;
     this._hudTimer = 0;
+    this.menu = this.el.menu;
+    this.settings = this.el.settings;
+    this._inGame = false;
     this._bindMenu();
     this._buildButtons();
     this.applyHudLayout();
+  }
+
+  _setButtonsVisible(v) {
+    this._inGame = v;
+    this.applyHudLayout();
+  }
+
+  // dot-path helpers for nested settings (e.g. "sensitivity.camera")
+  _get(key) { let o = this.s; for (const p of key.split('.')) o = o ? o[p] : undefined; return o; }
+  _set(key, v) {
+    const ps = key.split('.');
+    let o = this.s;
+    for (let i = 0; i < ps.length - 1; i++) o = o[ps[i]];
+    o[ps[ps.length - 1]] = v;
   }
 
   // ---------------- main menu ----------------
@@ -56,12 +73,14 @@ export class UI {
   hideMenu() {
     this.menu.classList.remove('on');
     this.el.hud.style.display = 'block';
+    this._setButtonsVisible(true);
     g_showZones(this.g);
   }
   showMenu() {
     this.menu.classList.add('on');
     this.el.hud.style.display = 'none';
     this.el.pause.classList.remove('on');
+    this._setButtonsVisible(false);
     g_hideZones(this.g);
     this.el.banner.style.display = 'none';
     this.el.deathveil.style.display = 'none';
@@ -115,15 +134,15 @@ export class UI {
     const row = this._row(body, label);
     const inp = document.createElement('input');
     inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step;
-    inp.value = this.s[key];
+    inp.value = this._get(key);
     const val = document.createElement('span');
     val.className = 'val';
-    val.textContent = fmt ? fmt(this.s[key]) : this.s[key];
+    val.textContent = fmt ? fmt(this._get(key)) : this._get(key);
     inp.oninput = () => {
-      this.s[key] = parseFloat(inp.value);
-      val.textContent = fmt ? fmt(this.s[key]) : this.s[key];
+      this._set(key, parseFloat(inp.value));
+      val.textContent = fmt ? fmt(this._get(key)) : this._get(key);
       this.g.save();
-      if (onChange) onChange(this.s[key]);
+      if (onChange) onChange(this._get(key));
     };
     row.appendChild(inp); row.appendChild(val);
     body.appendChild(row);
@@ -135,19 +154,28 @@ export class UI {
     for (const [v, l2] of options) {
       const o = document.createElement('option');
       o.value = v; o.textContent = l2;
-      if (String(this.s[key]) === String(v)) o.selected = true;
+      if (String(this._get(key)) === String(v)) o.selected = true;
       sel.appendChild(o);
     }
-    sel.onchange = () => { this.s[key] = isNaN(parseFloat(sel.value)) ? sel.value : parseFloat(sel.value); this.g.save(); if (onChange) onChange(this.s[key]); };
+    sel.onchange = () => {
+      const v = isNaN(parseFloat(sel.value)) ? sel.value : parseFloat(sel.value);
+      this._set(key, v); this.g.save();
+      if (onChange) onChange(v);
+    };
     row.appendChild(sel);
     body.appendChild(row);
   }
   _toggle(body, label, key, onChange) {
     const row = this._row(body, label);
     const t = document.createElement('button');
-    t.className = 'toggle pe' + (this.s[key] ? ' on' : '');
+    t.className = 'toggle pe' + (this._get(key) ? ' on' : '');
     t.innerHTML = '<i></i>';
-    t.onclick = () => { this.s[key] = !this.s[key]; t.classList.toggle('on', this.s[key]); this.g.save(); if (onChange) onChange(this.s[key]); };
+    t.onclick = () => {
+      this._set(key, !this._get(key));
+      t.classList.toggle('on', this._get(key));
+      this.g.save();
+      if (onChange) onChange(this._get(key));
+    };
     row.appendChild(t);
     body.appendChild(row);
   }
@@ -326,7 +354,7 @@ export class UI {
       b.style.left = `${(lay.x / 100) * rw - size / 2}px`;
       b.style.top = `${(lay.y / 100) * rh - size / 2}px`;
       b.style.opacity = lay.o;
-      b.style.display = lay.v ? 'flex' : 'none';
+      b.style.display = (this._inGame && lay.v) ? 'flex' : 'none';
     }
   }
 
@@ -398,6 +426,7 @@ export class UI {
   showMatchEnd(data) {
     const g = this.g;
     this.hideBanner();
+    this._setButtonsVisible(false);
     const win = data.winner === 'a';
     const el = document.createElement('div');
     el.className = 'screen on';
@@ -437,6 +466,7 @@ export class UI {
     const g = this.g;
     const he = this.el.hudedit;
     he.style.display = 'block';
+    this._inGame = true; // show controls while editing (editor is reached from menu)
     this.applyHudLayout();
     this._heSel = null;
     const selBtns = Object.keys(this.btnEls);
@@ -531,6 +561,9 @@ export class UI {
       joy.style.pointerEvents = 'none';
       joy.onpointerdown = null;
       for (const id of selBtns) this.btnEls[id].onpointerdown = null;
+      // editor is reached from the main menu → back to menu state (buttons hidden)
+      this._inGame = false;
+      this.applyHudLayout();
       g.save();
     };
   }
